@@ -1,0 +1,58 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+use 5.008005;
+use JSON;
+use LWP::UserAgent;
+use Pod::Usage;
+
+our $VERSION = '0.01';
+
+my $module = pop @ARGV || pod2usage(); # last one is module name
+
+my $ua = LWP::UserAgent->new(agent => "$0/$VERSION");
+
+my $release = get_json("http://api.beta.metacpan.org/module/$module", 'distribution');
+my $url = get_json("http://api.beta.metacpan.org/release/$release", 'download_url');
+warn $url;
+
+system('cpanm', @ARGV, $url);
+
+sub get_json {
+    my ($api_url, $key) = @_;
+    my $res = $ua->get($api_url);
+    die "$api_url: " . $res->status_line . "\n" . $res->content unless $res->is_success;
+    my $dat = decode_json($res->content);
+    $dat->{$key} || die "Invalid json: " . $res->content;
+}
+
+__END__
+
+=encoding utf8
+
+=head1 NAME
+
+App::cpanfl -
+
+=head1 SYNOPSIS
+
+  use App::cpanfl;
+
+=head1 DESCRIPTION
+
+App::cpanfl is
+
+=head1 AUTHOR
+
+Tokuhiro Matsuno E<lt>tokuhirom AAJKLFJEF GMAIL COME<gt>
+
+=head1 SEE ALSO
+
+=head1 LICENSE
+
+Copyright (C) Tokuhiro Matsuno
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
